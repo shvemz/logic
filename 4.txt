@@ -1,0 +1,64 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <windows.h>
+
+int main(void)
+{
+    int a[3][4];
+    int i, j;
+    int sum;
+
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
+
+    srand((unsigned int)time(NULL));
+
+    /* Заполнение массива случайными числами */
+    i = 0;
+    while (i < 3)
+    {
+        j = 0;
+        while (j < 4)
+        {
+            a[i][j] = rand() % 100;
+            j++;
+        }
+        i++;
+    }
+
+    /* Вывод массива */
+    printf("Двумерный массив:\n");
+
+    i = 0;
+    while (i < 3)
+    {
+        j = 0;
+        while (j < 4)
+        {
+            printf("%d\t", a[i][j]);
+            j++;
+        }
+        printf("\n");
+        i++;
+    }
+
+    /* Вычисление суммы каждого столбца */
+    j = 0;
+    while (j < 4)
+    {
+        sum = 0;
+        i = 0;
+
+        while (i < 3)
+        {
+            sum = sum + a[i][j];
+            i++;
+        }
+
+        printf("Сумма элементов столбца %d = %d\n", j + 1, sum);
+        j++;
+    }
+
+    return 0;
+}

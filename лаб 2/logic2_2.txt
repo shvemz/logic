@@ -1,0 +1,246 @@
+
+#define _CRT_SECURE_NO_WARNINGS
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+
+void shell(int* items, int count)
+{
+    int i, j, gap, k;
+    int x;
+    int a[5] = { 9, 5, 3, 2, 1 };
+
+    for (k = 0; k < 5; k++)
+    {
+        gap = a[k];
+
+        for (i = gap; i < count; ++i)
+        {
+            x = items[i];
+
+            for (j = i - gap;
+                (j >= 0) && (x < items[j]);
+                j = j - gap)
+            {
+                items[j + gap] = items[j];
+            }
+
+            items[j + gap] = x;
+        }
+    }
+}
+
+void qs(int* items, int left, int right)
+{
+    while (left < right)
+    {
+        int i = left;
+        int j = right;
+
+        int x = items[(left + right) / 2];
+        int y;
+
+        while (i <= j)
+        {
+            while (i <= right && items[i] < x)
+            {
+                i++;
+            }
+
+            while (j >= left && items[j] > x)
+            {
+                j--;
+            }
+
+            if (i <= j)
+            {
+                y = items[i];
+                items[i] = items[j];
+                items[j] = y;
+
+                i++;
+                j--;
+            }
+        }
+
+        if (j - left < right - i)
+        {
+            if (left < j)
+            {
+                qs(items, left, j);
+            }
+
+            left = i;
+        }
+        else
+        {
+            if (i < right)
+            {
+                qs(items, i, right);
+            }
+
+            right = j;
+        }
+    }
+}
+
+int compare_ints(const void* a, const void* b)
+{
+    int x = *(const int*)a;
+    int y = *(const int*)b;
+
+    if (x < y)
+        return -1;
+
+    if (x > y)
+        return 1;
+
+    return 0;
+}
+
+int is_sorted(int* items, int count)
+{
+    for (int i = 1; i < count; i++)
+    {
+        if (items[i - 1] > items[i])
+            return 0;
+    }
+
+    return 1;
+}
+
+void copy_array(int* destination, int* source, int count)
+{
+    memcpy(destination, source, count * sizeof(int));
+}
+
+double measure_shell(int* items, int count)
+{
+    clock_t start = clock();
+
+    shell(items, count);
+
+    clock_t end = clock();
+
+    return (double)(end - start) / CLOCKS_PER_SEC;
+}
+
+double measure_quick(int* items, int count)
+{
+    clock_t start = clock();
+
+    qs(items, 0, count - 1);
+
+    clock_t end = clock();
+
+    return (double)(end - start) / CLOCKS_PER_SEC;
+}
+
+double measure_qsort(int* items, int count)
+{
+    clock_t start = clock();
+
+    qsort(items, count, sizeof(int), compare_ints);
+
+    clock_t end = clock();
+
+    return (double)(end - start) / CLOCKS_PER_SEC;
+}
+
+void test_set(int* original, int count, const char* name)
+{
+    int* a = (int*)malloc(count * sizeof(int));
+    int* b = (int*)malloc(count * sizeof(int));
+    int* c = (int*)malloc(count * sizeof(int));
+
+    if (a == NULL || b == NULL || c == NULL)
+    {
+        printf("memory allocation error\n");
+
+        free(a);
+        free(b);
+        free(c);
+
+        return;
+    }
+
+    copy_array(a, original, count);
+    copy_array(b, original, count);
+    copy_array(c, original, count);
+
+    double time_shell = measure_shell(a, count);
+    double time_quick = measure_quick(b, count);
+    double time_standard = measure_qsort(c, count);
+
+    printf("\n%s\n", name);
+
+    printf("shell:  %.6f sec | sorted: %s\n",
+        time_shell,
+        is_sorted(a, count) ? "yes" : "no");
+
+    printf("quick:  %.6f sec | sorted: %s\n",
+        time_quick,
+        is_sorted(b, count) ? "yes" : "no");
+
+    printf("qsort:  %.6f sec | sorted: %s\n",
+        time_standard,
+        is_sorted(c, count) ? "yes" : "no");
+
+    free(a);
+    free(b);
+    free(c);
+}
+
+int main(void)
+{
+    int count = 100000;
+
+    int* original = (int*)malloc(count * sizeof(int));
+
+    if (original == NULL)
+    {
+        printf("memory allocation error\n");
+        return 1;
+    }
+
+    srand(1);
+
+    for (int i = 0; i < count; i++)
+    {
+        original[i] = rand() % 100000;
+    }
+
+    test_set(original, count, "random");
+
+    for (int i = 0; i < count; i++)
+    {
+        original[i] = i;
+    }
+
+    test_set(original, count, "increasing");
+
+    for (int i = 0; i < count; i++)
+    {
+        original[i] = count - i;
+    }
+
+    test_set(original, count, "decreasing");
+
+    for (int i = 0; i < count / 2; i++)
+    {
+        original[i] = i;
+    }
+
+    for (int i = count / 2; i < count; i++)
+    {
+        original[i] = count - i;
+    }
+
+    test_set(original, count, "increasing + decreasing");
+
+    free(original);
+
+    return 0;
+}
